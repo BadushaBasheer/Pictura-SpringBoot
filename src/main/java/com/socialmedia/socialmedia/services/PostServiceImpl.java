@@ -36,7 +36,8 @@ public class PostServiceImpl implements PostService {
     @Override
     public List<Post> findAllPosts() {
         try {
-            return postRepository.findAll();
+//            return postRepository.findAll();
+            return postRepository.findAllByOrderByCreatedAtDesc();
         } catch (Exception ex) {
             throw new RuntimeException("Failed to fetch all posts", ex);
         }

@@ -17,6 +17,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     List<Post> findPostByUserId(Long userId);
 
+    List<Post> findAllByOrderByCreatedAtDesc();
+
     Optional<Post> findByImage_FileName(String fileName);
 
 
