@@ -47,7 +47,7 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    public ResponseEntity<Post> findPostByIdHandler(@PathVariable Long postId){
+    public ResponseEntity<Post> findPostByIdHandler(@PathVariable Long postId) {
         Post post = postService.findPostById(postId);
         return new ResponseEntity<>(post, HttpStatus.ACCEPTED);
     }
@@ -121,7 +121,7 @@ public class PostController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
 
-            Post createdPost = postService.createNewPost( userId, file, caption);
+            Post createdPost = postService.createNewPost(userId, file, caption);
             logger.info("Post created successfully with ID: {}", createdPost.getId());
 
             return ResponseEntity.ok(createdPost);

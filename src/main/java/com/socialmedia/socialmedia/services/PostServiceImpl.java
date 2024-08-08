@@ -9,6 +9,8 @@ import com.socialmedia.socialmedia.entities.User;
 import com.socialmedia.socialmedia.repositories.CommentRepository;
 import com.socialmedia.socialmedia.repositories.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +23,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PostServiceImpl.class);
+
 
     private final UserService userService;
     private final PostRepository postRepository;
