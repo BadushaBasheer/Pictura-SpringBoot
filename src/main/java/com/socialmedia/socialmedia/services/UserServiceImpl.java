@@ -1,18 +1,21 @@
 package com.socialmedia.socialmedia.services;
 
+import com.socialmedia.socialmedia.dto.FollowerDTO;
+import com.socialmedia.socialmedia.dto.FollowingDTO;
 import com.socialmedia.socialmedia.dto.UserDTO;
 import com.socialmedia.socialmedia.entities.Follower;
 import com.socialmedia.socialmedia.entities.Following;
 import com.socialmedia.socialmedia.entities.User;
 import com.socialmedia.socialmedia.entities.UserBlock;
 import com.socialmedia.socialmedia.enums.UserRole;
+import com.socialmedia.socialmedia.repositories.FollowerRepository;
+import com.socialmedia.socialmedia.repositories.FollowingRepository;
 import com.socialmedia.socialmedia.repositories.UserBlockRepository;
 import com.socialmedia.socialmedia.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,10 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
+    private final FollowerRepository followerRepository;
+
+    private final FollowingRepository followingRepository;
 
     private final UserBlockRepository userBlockRepository;
 
@@ -47,6 +54,100 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
 
+//-------------------------------------------------------------------------------------------------------
+
+//    @Override
+//    public List<Follower> followedUsers(UserDetails userDetails) {
+//        User authenticatedUser = getAuthenticatedUser(userDetails);
+//        Long userId = authenticatedUser.getId();
+//        List<Follower> followedUsers = followerRepository.findUserByFollowerId(userId);
+//        if (followedUsers == null || followedUsers.isEmpty()) {
+//            throw new EntityNotFoundException("No users followed by user with id: " + userId);
+//        }
+//        return followedUsers;
+//    }
+
+    @Override
+    public List<UserDTO> getFollowedUserDTOs(UserDetails userDetails) {
+        User authenticatedUser = getAuthenticatedUser(userDetails);
+        Long userId = authenticatedUser.getId();
+        List<Follower> followers = followerRepository.findUserByFollowerId(userId);
+
+        if (followers == null || followers.isEmpty()) {
+            throw new EntityNotFoundException("No users followed by user with id: " + userId);
+        }
+
+        return followers.stream()
+                .map(follower -> {
+                    User user = follower.getUser();
+                    return UserDTO.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .profilePic(user.getProfilePic())
+                            .bio(user.getBio())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+
+//    @Override
+//    public List<Following> followingUsers(UserDetails userDetails) {
+//        User authenticatedUser = getAuthenticatedUser(userDetails);
+//        Long userId = authenticatedUser.getId();
+//        List<Following> followingUsers = followingRepository.findUserByFollowingId(userId);
+//        if (followingUsers == null || followingUsers.isEmpty()) {
+//            throw new EntityNotFoundException("No users followed by user with id: " + userId);
+//        }
+//        return followingUsers;
+//    }
+
+    @Override
+    public List<UserDTO> getFollowingUserDTOs(UserDetails userDetails) {
+        User authenticatedUser = getAuthenticatedUser(userDetails);
+        Long userId = authenticatedUser.getId();
+        List<Following> followingUsers = followingRepository.findUserByFollowingId(userId);
+
+        if (followingUsers == null || followingUsers.isEmpty()) {
+            throw new EntityNotFoundException("No users followed by user with id: " + userId);
+        }
+
+        return followingUsers.stream()
+                .map(following -> {
+                    User user = following.getUser();
+                    return UserDTO.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .profilePic(user.getProfilePic())
+                            .bio(user.getBio())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
+
+//-------------------------------------------------------------------------------------------------------
+
+
+    @Override
+    public User getAuthenticatedUser(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new SecurityException("User is not authenticated");
+        }
+        Long id = getUserIdFromUserDetails(userDetails);
+        User user = userRepository.findUserById(id);
+
+        if (user == null) {
+            throw new EntityNotFoundException("User not found with id: " + id);
+        }
+        return user;
+    }
+
+
     @Override
     public User findUserById(Long userId) {
         User user = userRepository.findUserById(userId);
@@ -64,19 +165,44 @@ public class UserServiceImpl implements UserService {
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .filter(user -> user.getUserRole() != UserRole.ADMIN)
-                .map(user -> {
-                    UserDTO userDTO = new UserDTO();
-                    userDTO.setId(user.getId());
-                    userDTO.setName(user.getName());
-                    userDTO.setEmail(user.getUsername());
-                    userDTO.setProfilePic(user.getProfilePic());
-                    userDTO.setUserRole(user.getUserRole());
-                    userDTO.setCreatedDate(user.getCreatedDate());
-                    userDTO.setModifiedDate(user.getModifiedDate());
-                    userDTO.setEnabled(user.isEnabled());
-                    return userDTO;
-                })
+                .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    private UserDTO mapToDTO(User user) {
+        List<FollowerDTO> followers = user.getFollowers().stream()
+                .map(follower -> FollowerDTO.builder()
+                        .id(follower.getId())
+                        .name(follower.getUser().getName())
+                        .email(follower.getUser().getEmail())
+                        .profilePic(follower.getUser().getProfilePic())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<FollowingDTO> following = user.getFollowing().stream()
+                .map(followingUser -> FollowingDTO.builder()
+                        .id(followingUser.getId())
+                        .name(followingUser.getUser().getName())
+                        .email(followingUser.getUser().getEmail())
+                        .profilePic(followingUser.getUser().getProfilePic())
+                        .build())
+                .collect(Collectors.toList());
+
+        return UserDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .profilePic(user.getProfilePic())
+                .bio(user.getBio())
+                .userRole(user.getUserRole())
+                .enabled(user.isEnabled())
+                .accountLocked(user.isAccountLocked())
+                .googleSignIn(user.isGoogleSignIn())
+                .isBlockedByAdmin(user.isBlockedByAdmin())
+                .createdDate(user.getCreatedDate())
+                .followers(followers)
+                .following(following)
+                .build();
     }
 
 
@@ -123,6 +249,14 @@ public class UserServiceImpl implements UserService {
         User user1 = findUserById(userId1);
         User user2 = findUserById(userId2);
 
+        // Check if already following
+        boolean isAlreadyFollowing = user1.getFollowing().stream()
+                .anyMatch(following -> following.getFollowingId().equals(user2.getId()));
+
+        if (isAlreadyFollowing) {
+            throw new IllegalStateException("User is already following this user.");
+        }
+
         Following following = new Following();
         following.setUser(user1);
         following.setFollowingId(user2.getId());
@@ -139,6 +273,7 @@ public class UserServiceImpl implements UserService {
 
         return user1;
     }
+
 
 
     //-------------------------------BLOCK / UNBLOCK SECTION--------------------------------------

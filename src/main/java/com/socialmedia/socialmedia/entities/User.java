@@ -2,6 +2,7 @@ package com.socialmedia.socialmedia.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.socialmedia.socialmedia.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -67,9 +68,11 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "blocked", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserBlock> blockedByUsers = new HashSet<>();
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Follower> followers = new ArrayList<>();
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Following> following = new ArrayList<>();
 

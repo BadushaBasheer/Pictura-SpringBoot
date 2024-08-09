@@ -115,7 +115,7 @@ public class PostController {
             Long userId = userService.getUserIdFromUserDetails(userDetails);
 
             // Check if file size exceeds the database column limit
-            long maxFileSize = 20 * 1024 * 1024; // 16MB
+            long maxFileSize = 10 * 1024 * 1024;
             if (file.getSize() > maxFileSize) {
                 logger.error("File size exceeds the maximum limit of {} bytes", maxFileSize);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

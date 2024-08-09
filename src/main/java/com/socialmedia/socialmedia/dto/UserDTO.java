@@ -1,45 +1,31 @@
 package com.socialmedia.socialmedia.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.socialmedia.socialmedia.enums.UserRole;
-import jakarta.validation.constraints.Email;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.data.annotation.LastModifiedDate;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
 public class UserDTO {
-
     private Long id;
-
     private String name;
-
-    @Email
     private String email;
-
-    private String bio;
-
     private String profilePic;
-
-    private boolean isGoogleSignIn;
-
-    @CreationTimestamp
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
-    private LocalDateTime createdDate;
-
-    @LastModifiedDate
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
-    private LocalDateTime modifiedDate;
-
-    private boolean isEnabled;
-
+    private String bio;
+    private boolean enabled;
     private UserRole userRole;
+    private boolean accountLocked;
+    private boolean googleSignIn;
+    private boolean isBlockedByAdmin;
+    private LocalDateTime createdDate;
+    private LocalDateTime modifiedDate;
+    private List<FollowerDTO> followers;
+    private List<FollowingDTO> following;
 
     private String token;
 

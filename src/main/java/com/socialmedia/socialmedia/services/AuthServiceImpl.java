@@ -153,8 +153,8 @@ public class AuthServiceImpl implements AuthService {
 
         // Convert to UserDTO
         UserDTO userDTO = new UserDTO();
-        userDTO.setId(createdUser.getId());
         userDTO.setName(createdUser.getName());
+        userDTO.setId(createdUser.getId());
         userDTO.setEmail(createdUser.getEmail());
         userDTO.setGoogleSignIn(createdUser.isGoogleSignIn());
         userDTO.setCreatedDate(createdUser.getCreatedDate());
