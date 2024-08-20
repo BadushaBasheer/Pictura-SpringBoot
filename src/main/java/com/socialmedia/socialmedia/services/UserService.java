@@ -1,36 +1,42 @@
 package com.socialmedia.socialmedia.services;
 
 import com.socialmedia.socialmedia.dto.UserDTO;
-import com.socialmedia.socialmedia.entities.Follower;
-import com.socialmedia.socialmedia.entities.Following;
 import com.socialmedia.socialmedia.entities.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface UserService {
 
     List<UserDTO> getAllUsers();
 
-//    List<Follower> followedUsers(UserDetails userDetails);
+    User unfollowUser(Long followerId, Long followedId);
 
-//    List<Following> followingUsers(UserDetails userDetails);
+    boolean checkIfFollowed(Long currentUserId, Long userIdToCheck);
 
     User getAuthenticatedUser(UserDetails userDetails);
 
     User findUserById(Long userId);
 
+    List<UserDTO> getSuggestionUser(Long currentUserId);
+
     List<User> searchUser(String query);
 
     User updateUser(User user);
 
+    User updateUserProfile(Long userId, User userUpdates, MultipartFile profilePic, MultipartFile backgroundImage) throws IOException;
+
     void deleteUser(Long userId);
 
-    User followUser(Long userId1, Long userId2);
+    List<UserDTO> getFollowedUserDTOs(UserDetails userDetails);
 
-//    List<User> followedUsers(UserDetails userDetails, Follower follower);
+    List<UserDTO> getFollowingUserDTOs(UserDetails userDetails);
 
-    void blockUser(Long blockerId, Long blockedId);
+    User followUser(Long followerId, Long followedId);
+
+    boolean blockUser(Long blockerId, Long blockedId);
 
     void unblockUser(Long blockerId, Long blockedId);
 
@@ -38,20 +44,10 @@ public interface UserService {
 
     boolean hasBlocked(Long userId, Long otherUserId);
 
-    boolean isAdminBlockedUser(Long userId);
-
     Long findUserIdByEmail(String email);
-
-    void unblockUserByAdmin(Long userId);
-
-    void blockUserByAdmin(Long userId);
 
     Long getUserIdFromUserDetails(UserDetails userDetails);
 
     User findUserByUsername(String username);
-
-    List<UserDTO> getFollowedUserDTOs(UserDetails userDetails);
-
-    List<UserDTO> getFollowingUserDTOs(UserDetails userDetails);
 
 }

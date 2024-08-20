@@ -1,6 +1,7 @@
-package com.socialmedia.socialmedia.services;
+package com.socialmedia.socialmedia.services.impl;
 
 import com.socialmedia.socialmedia.repositories.OtpRepository;
+import com.socialmedia.socialmedia.services.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

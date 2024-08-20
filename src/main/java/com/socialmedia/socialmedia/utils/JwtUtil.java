@@ -106,4 +106,15 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    public Map<String, String> createTokens(UserDetails userDetails) {
+        String accessToken = generateToken(userDetails);
+        String refreshToken = generateRefreshToken(userDetails);
+
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+
+        return tokens;
+    }
+
 }

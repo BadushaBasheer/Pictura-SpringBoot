@@ -2,24 +2,28 @@ package com.socialmedia.socialmedia.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
 @Setter
+@Getter
 @Entity
-@Table(name = "following")
-public class Following {
+@EqualsAndHashCode
+@Table(name = "follow")
+public class Follow {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @ManyToOne
     @JsonBackReference
-    private User user;
+    @JoinColumn(name = "followed_id")
+    private User followed;
 
-    @Column(name = "following_id")
-    private Long followingId;
+    @ManyToOne
+    @JsonBackReference
+    @JoinColumn(name = "follower_id")
+    private User follower;
 }

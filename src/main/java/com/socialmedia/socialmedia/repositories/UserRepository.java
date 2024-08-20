@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface
+UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findUserByEmail(String email);
 
@@ -24,6 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByName(String name);
 
     List<User> findByNameContainingOrEmailContaining(String name, String Email);
+
 
 
 }

@@ -100,8 +100,14 @@ public class AuthenticationController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestBody RefreshResponse refreshResponse) {
         String refreshToken = refreshResponse.getRefreshToken();
-        if (jwtUtil.isRefreshTokenValid(refreshToken, this.customUserDetailService.loadUserByUsername(jwtUtil.extractUsername(refreshToken)))) {
-            UserDetails userDetails = this.customUserDetailService.loadUserByUsername(jwtUtil.extractUsername(refreshToken));
+        String username = jwtUtil.extractUsername(refreshToken);
+        UserDetails userDetails = this.customUserDetailService.loadUserByUsername(username);
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+        }
+
+        if (jwtUtil.isRefreshTokenValid(refreshToken, userDetails)) {
             String newAccessToken = jwtUtil.generateToken(userDetails);
             String newRefreshToken = jwtUtil.generateRefreshToken(userDetails);
             return ResponseEntity.ok(new AuthResponse(newAccessToken, newRefreshToken));
@@ -109,4 +115,5 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
         }
     }
+
 }

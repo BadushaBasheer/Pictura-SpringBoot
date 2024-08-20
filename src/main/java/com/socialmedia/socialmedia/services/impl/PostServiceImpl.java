@@ -1,4 +1,4 @@
-package com.socialmedia.socialmedia.services;
+package com.socialmedia.socialmedia.services.impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -8,6 +8,10 @@ import com.socialmedia.socialmedia.entities.Post;
 import com.socialmedia.socialmedia.entities.User;
 import com.socialmedia.socialmedia.repositories.CommentRepository;
 import com.socialmedia.socialmedia.repositories.PostRepository;
+import com.socialmedia.socialmedia.repositories.UserRepository;
+import com.socialmedia.socialmedia.services.PostService;
+import com.socialmedia.socialmedia.services.UserService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,13 +34,13 @@ public class PostServiceImpl implements PostService {
     private final UserService userService;
     private final PostRepository postRepository;
     private final Cloudinary cloudinary;
+    private final UserRepository userRepository;
     private final CommentRepository commentRepository;
 
 
     @Override
     public List<Post> findAllPosts() {
         try {
-//            return postRepository.findAll();
             return postRepository.findAllByOrderByCreatedAtDesc();
         } catch (Exception ex) {
             throw new RuntimeException("Failed to fetch all posts", ex);
@@ -220,7 +224,7 @@ public class PostServiceImpl implements PostService {
             savedPosts.add(post);
         }
         user.setSavedPost(savedPosts);
-        userService.updateUser(user);
+        userRepository.save(user);
         return post;
     }
 
@@ -295,15 +299,27 @@ public class PostServiceImpl implements PostService {
         return replyComment;
     }
 
+
+
+    @Transactional
     @Override
     public String deletePost(Long postId, Long userId) {
         Post post = findPostById(postId);
         User user = userService.findUserById(userId);
         if (!Objects.equals(post.getUser().getId(), user.getId())) {
             throw new IllegalArgumentException("You can't delete another user's post");
+        } else {
+            if (post.getImage() != null && post.getImage().getPublicId() != null) {
+                String publicId = post.getImage().getPublicId();
+                try {
+                    cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to delete image from Cloudinary", e);
+                }
+            }
+            postRepository.deleteById(postId);
         }
-        postRepository.deleteById(postId);
-        return "Post with ID " + postId + " has been deleted successfully";
+        return "Post with ID " + post.getCaption() + " has been deleted successfully";
     }
 
 

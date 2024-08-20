@@ -1,6 +1,7 @@
-package com.socialmedia.socialmedia.services;
+package com.socialmedia.socialmedia.services.impl;
 
 import com.socialmedia.socialmedia.enums.EmailTemplateName;
+import com.socialmedia.socialmedia.services.EmailService;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;

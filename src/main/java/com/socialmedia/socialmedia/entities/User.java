@@ -3,6 +3,7 @@ package com.socialmedia.socialmedia.entities;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.socialmedia.socialmedia.enums.Status;
 import com.socialmedia.socialmedia.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,7 +29,6 @@ import java.util.*;
 @EntityListeners(AuditingEntityListener.class)
 public class User implements UserDetails {
 
-    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -46,7 +46,7 @@ public class User implements UserDetails {
     private LocalDateTime createdDate;
 
     @LastModifiedDate
-    private LocalDateTime modifiedDate = null;
+    private LocalDateTime modifiedDate;
 
     private boolean accountLocked;
 
@@ -54,13 +54,19 @@ public class User implements UserDetails {
 
     private String profilePic;
 
+    private String backgroundImage;
+
     private boolean enabled;
 
     private boolean isBlockedByAdmin;
 
     private boolean isGoogleSignIn;
 
+    @Enumerated(EnumType.STRING)
     private UserRole userRole;
+
+//    @Enumerated(EnumType.STRING)
+//    private Status status;
 
     @OneToMany(mappedBy = "blocker", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserBlock> blockedUsers = new HashSet<>();
@@ -69,12 +75,12 @@ public class User implements UserDetails {
     private Set<UserBlock> blockedByUsers = new HashSet<>();
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Follower> followers = new ArrayList<>();
+    @OneToMany(mappedBy = "followed", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Follow> followers = new HashSet<>();
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Following> following = new ArrayList<>();
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Follow> following = new HashSet<>();
 
     @ManyToMany
     @JoinTable(
@@ -87,7 +93,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(userRole.name()));
+        return Collections.singleton(new SimpleGrantedAuthority(this.userRole.name()));
     }
 
     @Override

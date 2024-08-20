@@ -40,8 +40,14 @@ public class PostController {
         }
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Post>> findUsersPost(@PathVariable Long userId) {
+//    @GetMapping("/user/{userId}")
+//    public ResponseEntity<List<Post>> findUsersPost(@PathVariable Long userId) {
+//        List<Post> posts = postService.findPostByUserId(userId);
+//        return new ResponseEntity<>(posts, HttpStatus.OK);
+//    }
+    @GetMapping("/user/authenticatedUserPosts")
+    public ResponseEntity<List<Post>> findUsersPost(@AuthenticationPrincipal UserDetails user) {
+        Long userId = userService.findUserIdByEmail(user.getUsername());
         List<Post> posts = postService.findPostByUserId(userId);
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }

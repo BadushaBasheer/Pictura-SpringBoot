@@ -1,16 +1,20 @@
-package com.socialmedia.socialmedia.services;
+package com.socialmedia.socialmedia.services.impl;
 
 import com.socialmedia.socialmedia.config.CustomUserDetailService;
 import com.socialmedia.socialmedia.dto.LoginDTO;
 import com.socialmedia.socialmedia.dto.RegisterDTO;
 import com.socialmedia.socialmedia.dto.UserDTO;
+import com.socialmedia.socialmedia.entities.Admin;
 import com.socialmedia.socialmedia.entities.Otp;
 import com.socialmedia.socialmedia.entities.User;
 import com.socialmedia.socialmedia.enums.EmailTemplateName;
 import com.socialmedia.socialmedia.enums.UserRole;
+import com.socialmedia.socialmedia.repositories.AdminRepository;
 import com.socialmedia.socialmedia.repositories.OtpRepository;
 import com.socialmedia.socialmedia.repositories.UserRepository;
 import com.socialmedia.socialmedia.response.LoginResponse;
+import com.socialmedia.socialmedia.services.AuthService;
+import com.socialmedia.socialmedia.services.EmailService;
 import com.socialmedia.socialmedia.utils.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +45,8 @@ public class AuthServiceImpl implements AuthService {
 
     private final CustomUserDetailService customUserDetailService;
 
+    private final AdminRepository adminRepository;
+
     private final UserRepository userRepository;
 
     private final OtpRepository otpRepository;
@@ -67,25 +73,37 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse authenticate(LoginDTO loginDTO) {
         authenticateUser(loginDTO);
 
-        final UserDetails userDetails = this.customUserDetailService.loadUserByUsername(loginDTO.getEmail());
-        Optional<User> userOptional = userRepository.findFirstByEmail(loginDTO.getEmail());
+        Optional<User> optionalUser = userRepository.findUserByEmail(loginDTO.getEmail());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            final UserDetails userDetails = customUserDetailService.loadUserByUsername(loginDTO.getEmail());
+            Map<String, String> tokens = jwtUtil.createTokens(userDetails);
 
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            if (user.isGoogleSignIn()) {
-                throw new RuntimeException("Google Sign-In users cannot log in using this method");
-            }
-
-            final String jwtToken = jwtUtil.generateToken(userDetails);
             return LoginResponse.builder()
-                    .token(jwtToken)
+                    .token(tokens.get("accessToken"))
+                    .refreshToken(tokens.get("refreshToken"))
                     .userId(user.getId())
                     .userRole(user.getUserRole())
                     .expiresIn(jwtUtil.getExpirationTime())
                     .build();
-        }
 
-        throw new RuntimeException("User not found");
+        }
+        Optional<Admin> optionalAdmin = adminRepository.findAdminByEmail(loginDTO.getEmail());
+        if (optionalAdmin.isPresent()) {
+            Admin admin = optionalAdmin.get();
+            final UserDetails adminDetails = customUserDetailService.loadUserByUsername(loginDTO.getEmail());
+            Map<String, String> tokens = jwtUtil.createTokens(adminDetails);
+
+            return LoginResponse.builder()
+                    .token(tokens.get("accessToken"))
+                    .refreshToken(tokens.get("refreshToken"))
+                    .userId(1L)
+                    .userRole(admin.getRoles())
+                    .expiresIn(jwtUtil.getExpirationTime())
+                    .build();
+        } else {
+            throw new RuntimeException("User or Admin not found");
+        }
     }
 
     private void authenticateUser(LoginDTO loginDTO) {
@@ -95,10 +113,11 @@ public class AuthServiceImpl implements AuthService {
                     loginDTO.getPassword()
             ));
         } catch (BadCredentialsException e) {
-            throw new BadCredentialsException("Incorrect username or password");
+            throw new BadCredentialsException("Incorrect username or password", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Authentication failed", e);
         }
     }
-
 
     @Override
     @Transactional
@@ -141,6 +160,8 @@ public class AuthServiceImpl implements AuthService {
         user.setUserRole(UserRole.USER);
         user.setGoogleSignIn(false);
         user.setProfilePic(pictureUrl);
+        user.setBackgroundImage(null);
+        user.setBio(null);
         user.setCreatedDate(LocalDateTime.now());
         user.setAccountLocked(false);
         user.setEnabled(false);
@@ -172,7 +193,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserDTO googleSignIn(UserDTO userDTO) {
-        // Check if the user exists
         Optional<User> optionalUser = userRepository.findByEmail(userDTO.getEmail());
         User user;
 
@@ -214,31 +234,6 @@ public class AuthServiceImpl implements AuthService {
     public boolean hasUserWithEmail(String email) {
         return userRepository.findFirstByEmail(email).isPresent();
     }
-
-
-//    @Override
-//    public LoginResponse authenticate(LoginDTO loginDTO) {
-//        authenticateUser(loginDTO);
-//
-//        final UserDetails userDetails = this.customUserDetailService.loadUserByUsername(loginDTO.getEmail());
-//        Optional<User> googleSignInUser = userRepository.findUserByGoogleSignIn(true);
-//        Optional<User> optionalUser = userRepository.findFirstByEmail(loginDTO.getEmail());
-//        final String jwtToken = jwtUtil.generateToken(userDetails);
-//
-//        if (optionalUser.isPresent() && googleSignInUser.isEmpty()) {
-//            User user = optionalUser.get();
-//            return LoginResponse.builder()
-//                    .token(jwtToken)
-//                    .userId(user.getId())
-//                    .userRole(user.getUserRole())
-//                    .expiresIn(jwtUtil.getExpirationTime())
-//                    .build();
-//        }
-//        throw new RuntimeException("User or Admin not found");
-//    }
-
-
-
 
 
     @Override
@@ -309,7 +304,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Expire the old token
-
 //      Otp existingOtp = otpRepository.findByUser(user)  //this is only allow the user get only 2 email if beyond that it throws error 400
 
         Otp existingOtp = otpRepository.findFirstByUserOrderByCreatedAtDesc(user)
@@ -323,11 +317,5 @@ public class AuthServiceImpl implements AuthService {
         // Send the new validation email
         sendValidationEmail(user, newToken);
     }
-
-
-
-
     //----------------------------------------
-
-
 }
